@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_SlotDecision" name="Slot Decision Table" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="5.28.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0">
+  <decision id="slot_decision" name="Slot Availability Decision">
+    <decisionTable id="DecisionTable_slot" hitPolicy="UNIQUE">
+      <input id="Input_department" label="Department">
+        <inputExpression id="InputExpr_department" typeRef="string">
+          <text>department</text>
+        </inputExpression>
+      </input>
+      <input id="Input_bookedCount" label="Booked Count">
+        <inputExpression id="InputExpr_bookedCount" typeRef="number">
+          <text>bookedCount</text>
+        </inputExpression>
+      </input>
+      <output id="Output_slotStatus" label="Slot Status" name="slotStatus" typeRef="string" />
+      <output id="Output_suggestedAction" label="Suggested Action" name="suggestedAction" typeRef="string" />
+      <rule id="Rule_Cardio_Available">
+        <description>Cardiology has open capacity</description>
+        <inputEntry id="In_1a">
+          <text>"Cardiology"</text>
+        </inputEntry>
+        <inputEntry id="In_1b">
+          <text>&lt; 10</text>
+        </inputEntry>
+        <outputEntry id="Out_1a">
+          <text>"AVAILABLE"</text>
+        </outputEntry>
+        <outputEntry id="Out_1b">
+          <text>"Proceed to book slot"</text>
+        </outputEntry>
+      </rule>
+      <rule id="Rule_Cardio_Full">
+        <description>Cardiology reached max capacity (10+)</description>
+        <inputEntry id="In_2a">
+          <text>"Cardiology"</text>
+        </inputEntry>
+        <inputEntry id="In_2b">
+          <text>&gt;= 10</text>
+        </inputEntry>
+        <outputEntry id="Out_2a">
+          <text>"FULL"</text>
+        </outputEntry>
+        <outputEntry id="Out_2b">
+          <text>"Offer alternate slot or waiting list"</text>
+        </outputEntry>
+      </rule>
+      <rule id="Rule_Other_Available">
+        <description>Other departments open capacity (&lt; 15)</description>
+        <inputEntry id="In_3a">
+          <text>not("Cardiology")</text>
+        </inputEntry>
+        <inputEntry id="In_3b">
+          <text>&lt; 15</text>
+        </inputEntry>
+        <outputEntry id="Out_3a">
+          <text>"AVAILABLE"</text>
+        </outputEntry>
+        <outputEntry id="Out_3b">
+          <text>"Proceed to book slot"</text>
+        </outputEntry>
+      </rule>
+      <rule id="Rule_Other_Full">
+        <description>Other departments reached max capacity (&gt;= 15)</description>
+        <inputEntry id="In_4a">
+          <text>not("Cardiology")</text>
+        </inputEntry>
+        <inputEntry id="In_4b">
+          <text>&gt;= 15</text>
+        </inputEntry>
+        <outputEntry id="Out_4a">
+          <text>"FULL"</text>
+        </outputEntry>
+        <outputEntry id="Out_4b">
+          <text>"Offer alternate slot or waiting list"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram id="DMNDiagram_SlotDecision">
+      <dmndi:DMNShape id="DMNShape_slot_decision" dmnElementRef="slot_decision">
+        <dc:Bounds height="80" width="180" x="160" y="80" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

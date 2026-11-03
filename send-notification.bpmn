@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_SendNotification" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.28.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.6.0">
+  <bpmn:error id="Error_Telegram" name="TELEGRAM_ERROR" errorCode="TELEGRAM_ERROR" />
+  <bpmn:process id="send-notification" name="Send Notification" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_NotificationRequested" name="Notification requested">
+      <bpmn:outgoing>Flow_StartToTask</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Task_SendTelegram" name="Send Telegram Notification">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="io.camunda:http-json:1" retries="3" />
+        <zeebe:ioMapping>
+          <zeebe:input source="noAuth" target="authentication.type" />
+          <zeebe:input source="POST" target="method" />
+          <zeebe:input source="https://api.telegram.org/bot{{secrets.TELEGRAM_BOT_TOKEN}}/sendMessage" target="url" />
+          <zeebe:input source="={ &#34;Content-Type&#34;: &#34;application/json&#34; }" target="headers" />
+          <zeebe:input source="={ &#34;chat_id&#34;: recipientId, &#34;text&#34;: messageText }" target="body" />
+          <zeebe:input source="20" target="connectionTimeoutInSeconds" />
+          <zeebe:input source="20" target="readTimeoutInSeconds" />
+        </zeebe:ioMapping>
+        <zeebe:taskHeaders>
+          <zeebe:header key="resultExpression" value="={ responseStatus: response.status, responseBody: response.body }" />
+          <zeebe:header key="errorExpression" value="=if error.code != null then bpmnError(&#34;TELEGRAM_ERROR&#34;, error.message) else null" />
+          <zeebe:header key="retryBackoff" value="PT0S" />
+        </zeebe:taskHeaders>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_StartToTask</bpmn:incoming>
+      <bpmn:outgoing>Flow_TaskToEnd</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="Event_CatchTelegramError" name="Telegram API error handled" attachedToRef="Task_SendTelegram">
+      <bpmn:outgoing>Flow_ErrorToEnd</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrorEventDef_Telegram" errorRef="Error_Telegram" />
+    </bpmn:boundaryEvent>
+    <bpmn:endEvent id="EndEvent_NotificationSent" name="Notification sent">
+      <bpmn:incoming>Flow_TaskToEnd</bpmn:incoming>
+      <bpmn:incoming>Flow_ErrorToEnd</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_StartToTask" sourceRef="StartEvent_NotificationRequested" targetRef="Task_SendTelegram" />
+    <bpmn:sequenceFlow id="Flow_TaskToEnd" sourceRef="Task_SendTelegram" targetRef="EndEvent_NotificationSent" />
+    <bpmn:sequenceFlow id="Flow_ErrorToEnd" sourceRef="Event_CatchTelegramError" targetRef="EndEvent_NotificationSent" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_SendNotification">
+    <bpmndi:BPMNPlane id="BPMNPlane_SendNotification" bpmnElement="send-notification">
+      <bpmndi:BPMNShape id="StartEvent_NotificationRequested_di" bpmnElement="StartEvent_NotificationRequested">
+        <dc:Bounds x="182" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="173" y="145" width="56" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_SendTelegram_di" bpmnElement="Task_SendTelegram">
+        <dc:Bounds x="280" y="80" width="160" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_NotificationSent_di" bpmnElement="EndEvent_NotificationSent">
+        <dc:Bounds x="522" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="501" y="145" width="80" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_CatchTelegramError_di" bpmnElement="Event_CatchTelegramError">
+        <dc:Bounds x="372" y="142" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="355" y="185" width="71" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_StartToTask_di" bpmnElement="Flow_StartToTask">
+        <di:waypoint x="218" y="120" />
+        <di:waypoint x="280" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_TaskToEnd_di" bpmnElement="Flow_TaskToEnd">
+        <di:waypoint x="440" y="120" />
+        <di:waypoint x="522" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ErrorToEnd_di" bpmnElement="Flow_ErrorToEnd">
+        <di:waypoint x="390" y="178" />
+        <di:waypoint x="390" y="210" />
+        <di:waypoint x="540" y="210" />
+        <di:waypoint x="540" y="138" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
